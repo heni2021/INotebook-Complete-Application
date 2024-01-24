@@ -1,24 +1,50 @@
-import logo from './logo.svg';
 import './App.css';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate
+}
+  from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Home from './components/Home';
+import About from './components/About';
+import NoteState from './context/notes/NoteState';
+import Alert from './components/Alert'
+import Login from './components/Login';
+import Signup from './components/Signup';
+import { useState } from 'react';
 
 function App() {
+  const [alert, setAlert] = useState(null);
+
+  const showAlertMessage = (message, type) => {
+    setAlert({
+      msg: message,
+      type: type
+    });
+    setTimeout(() => {
+      setAlert(null);
+    }, 1000);
+  }
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <NoteState>
+        <Router>
+          <Navbar showAlert={showAlertMessage} />
+          <Alert message={alert} />
+          <div className="container">
+            <Routes>
+              <Route exact path='/' element={<Home showAlert={showAlertMessage} />} />
+              {/* <Route exact path='/' element={<Navigate to='/Login'/>} /> */}
+              <Route exact path='/about' element={<About />} />
+              <Route exact path='/Login' element={<Login showAlert={showAlertMessage} />} />
+              <Route exact path='/register' element={<Signup showAlert={showAlertMessage} />} />
+            </Routes>
+          </div>
+        </Router>
+      </NoteState>
+    </>
   );
 }
 

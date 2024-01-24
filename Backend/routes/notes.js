@@ -6,8 +6,9 @@ const Notes = require('../models/Notes.js')
 
 // Route 1: Get all the notes from the database.
 router.get('/fetchNotes', fetchUser, async (request, response) => {
+    const success = true;
     const notes = await Notes.find({ user: request.user.id });
-    response.json(notes);
+    response.json({success, notes});
 });
 
 // Route 2: Add Notes to the particular user - Login Required
@@ -15,11 +16,12 @@ router.post('/addNotes', fetchUser, [
     body('title', 'Enter a valid title').isLength({ min: 3 }),
     body('description', 'Minimum 5 characters required').isLength({ min: 5 }),
 ], async (request, response) => {
+    let success = false;
     try {
         const { title, description, tag } = request.body;
         const errors = validationResult(request);
         if (!errors.isEmpty()) {
-            return response.status(400).json({
+            return response.status(400).json({success, 
                 errors: errors.array()
             });
         }
@@ -31,16 +33,19 @@ router.post('/addNotes', fetchUser, [
             user: request.user.id
         });
         const savedNote = await note.save();
-        response.json(savedNote);
+        success = true;
+        response.json(success, savedNote);
     } catch (err) {
         console.error(err.message);
-        response.status(400).send("Internal Error Occured!");
+        success = false;
+        response.status(400).send({success,error : "Internal Error Occured!"});
     }
 });
 
 
 // Route 3: Update an existing Note - login required
 router.put('/updateNote/:id', fetchUser, async (req, res) => {
+    let success = false;
     try {
         // Create a newNote object
         const { title, description, tag } = req.body;
@@ -51,10 +56,10 @@ router.put('/updateNote/:id', fetchUser, async (req, res) => {
 
         // Find the note to be updated and check ownership
         let note = await Notes.findById(req.params.id);
-        if (!note) { return res.status(404).send("Not Found") }
+        if (!note) { return res.status(404).send({success, error: "Not Found"}) }
 
         if (note.user.toString() !== req.user.id) {
-            return res.status(401).send("Not Allowed");
+            return res.status(401).send({success, error:"Not Allowed"});
         }
 
         // Update the note using findByIdAndUpdate
@@ -63,30 +68,35 @@ router.put('/updateNote/:id', fetchUser, async (req, res) => {
             { $set: newNote },
             { new: true } // Important: useFindAndModify should be set to false
         );
-        res.json({ note });
+        success = true;
+        res.json({success, note });
     } catch (error) {
         console.error(error.message);
-        res.status(500).send("Internal Server Error");
+        success = false
+        res.status(500).send({success, error: "Internal Server Error"});
     }
 });
 
 // Route 4 : Delete Notes - Login Required
 router.delete('/deleteNote/:id', fetchUser, async (request, response) => {
+    let success = false;
     try {
         // Find the note to be updated and check ownership
         let note = await Notes.findById(request.params.id);
-        if (!note) { return response.status(404).send("Not Found") }
+        if (!note) { return response.status(404).send({success, error: "Not Found"}) }
 
         if (note.user.toString() !== request.user.id) {
-            return response.status(401).send("Unauthorized Access");
+            return response.status(401).send({success, error: "Unauthorized Access"});
         }
 
         // Update the note using findByIdAndUpdate
         note = await Notes.findByIdAndDelete(request.params.id);
-        response.send("Success! Note with id - " + request.params.id + " has been deleted successfully!");
+        success = true;
+        response.send( {success,"message": "Success! Note with id - " + request.params.id + " has been deleted successfully!"});
     } catch (error) {
         console.error(error.message);
-        res.status(500).send("Internal Server Error");
+        success = false;
+        res.status(500).send({success, error: "Internal Server Error"});
     }
 });
 
