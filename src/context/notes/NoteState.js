@@ -6,6 +6,7 @@ const NoteState = (props) => {
     const[notes, setNotes] = useState(initialNotes);
 
     const fetchUrl = process.env.REACT_APP_FETCH_NOTES_URL;
+    
     // get all notes
     const getAllNotes = async() =>{
         const response = await fetch(fetchUrl, {
